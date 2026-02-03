@@ -1,0 +1,5 @@
+{
+  "name": "Traffic Monetizer Gate",
+  "description": "A single-file mobile-first landing page designed for traffic monetization with step-based unlocking and adblock detection.",
+  "requestFramePermissions": []
+}
