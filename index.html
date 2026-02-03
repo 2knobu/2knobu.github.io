@@ -309,27 +309,9 @@
             const [completedSteps, setCompletedSteps] = useState([]);
             // Track how many times each step has been clicked
             const [stepClickCounts, setStepClickCounts] = useState({});
-            const [isLoaded, setIsLoaded] = useState(false);
 
             const totalSteps = config.stepLinks.length;
             const isUnlocked = completedSteps.length === totalSteps;
-
-            // Load progress from localStorage on mount
-            useEffect(() => {
-                const saved = localStorage.getItem('trafficMonetizerSteps');
-                if (saved) {
-                    try { setCompletedSteps(JSON.parse(saved)); } 
-                    catch (e) { console.error("Failed to load progress"); }
-                }
-                setIsLoaded(true);
-            }, []);
-
-            // Save progress whenever it changes
-            useEffect(() => {
-                if (isLoaded) {
-                    localStorage.setItem('trafficMonetizerSteps', JSON.stringify(completedSteps));
-                }
-            }, [completedSteps, isLoaded]);
 
             const handleStepClick = (stepNumber) => {
                 // 1. Always open the link to ensure traffic (and user isn't suspicious)
