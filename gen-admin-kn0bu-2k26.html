@@ -15,19 +15,24 @@
     
     <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Load Theme Config for Admin Panel consistency -->
+    <script src="assets/js/config-colors.js"></script>
+    <link rel="stylesheet" href="assets/css/style.css">
 
     <style>
         body { background-color: #000000; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
         .input-field { background: #1a1a1a; border: 1px solid #333; color: white; transition: all 0.3s; width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 14px; }
-        .input-field:focus { border-color: #0C4497; outline: none; box-shadow: 0 0 10px rgba(12, 68, 151, 0.2); }
+        .input-field:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.2); }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-slide { animation: slideIn 0.4s ease forwards; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        .loader { border-top-color: #0C4497; animation: spinner 1.5s linear infinite; }
+        .loader { border-top-color: var(--primary); animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Override specifically for admin panel buttons */
+        .btn-primary { background-color: var(--primary); color: #000; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .text-primary { color: var(--primary); }
     </style>
 </head>
 <body class="p-4 md:p-12 min-h-screen">
@@ -50,9 +55,9 @@
             const safeStep5 = escapeHtml(data.step5.trim());
             const safeDownload = escapeHtml(data.download.trim());
 
-            // EXACT CARBON COPY of index.html source code, including original formatting and comments
-            // FIX: Using ${variable} for main interpolation and \${variable} for nested React templates
-            // THEME: Updated to #0C4497 (Dark Blue)
+            // --- THE SHELL TEMPLATE ---
+            // This template is lightweight. It defines the content but loads logic/styles externally.
+            // When we update assets/js/beat-gate-app.js, ALL pages using this shell update automatically.
             return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,6 +65,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${safeTitle} - Download</title>
     
+    <!-- External CSS -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"><\/script>
     
@@ -70,105 +78,12 @@
     <!-- Babel Standalone (for JSX) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"><\/script>
-
-    <style>
-        /* --- Base Styles --- */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f0f0f;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #0C4497;
-            border-radius: 10px;
-        }
-
-        /* --- Animations --- */
-        
-        /* Slow moving gradient background */
-        @keyframes gradient-xy {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .animate-gradient {
-            background-size: 200% 200%;
-            animation: gradient-xy 20s ease infinite;
-        }
-
-        /* Shake animation for error states */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-            20%, 40%, 60%, 80% { transform: translateX(4px); }
-        }
-        .animate-shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
-        /* Staggered Fade In Animation for list items */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0; /* Start hidden */
-        }
-        /* Delays for each item to create "stagger" effect */
-        .delay-0 { animation-delay: 0.1s; }
-        .delay-1 { animation-delay: 0.2s; }
-        .delay-2 { animation-delay: 0.3s; }
-        .delay-3 { animation-delay: 0.4s; }
-        .delay-4 { animation-delay: 0.5s; }
-        .delay-5 { animation-delay: 0.6s; }
-
-        /* Pulse glow for unlocked state */
-        @keyframes softPulse {
-            0%, 100% { box-shadow: 0 0 15px rgba(12, 68, 151, 0.2); }
-            50% { box-shadow: 0 0 30px rgba(12, 68, 151, 0.5); }
-        }
-        .glow-active {
-            animation: softPulse 3s infinite;
-        }
-
-        /* Bounce animation for checkmark */
-        @keyframes bounceIn {
-            0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-bounce-in {
-            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-    </style>
-
-    <!-- 
-      ********************************************************************
-      *             ADMIN CONFIGURATION ZONE - EDIT BELOW                *
-      ********************************************************************
-    -->
+    <!-- Theme Config -->
+    <script src="../assets/js/config-colors.js"><\/script>
+    
+    <!-- Page Specific Data -->
     <script>
         window.APP_CONFIG = {
-            // -----------------------------------------------------------
-            // 1. STEP LINKS
-            // Paste the URL for each step inside the quotes.
-            // You can add more lines or remove lines to change the number of steps.
-            // -----------------------------------------------------------
             stepLinks: [
                 "${safeStep1}",
                 "${safeStep2}",
@@ -176,380 +91,17 @@
                 "${safeStep4}",
                 "${safeStep5}"
             ],
-
-            // -----------------------------------------------------------
-            // 2. DOWNLOAD LINK
-            // The URL where the user will be redirected after finishing all steps.
-            // (e.g., MediaFire, Google Drive, Dropbox link)
-            // -----------------------------------------------------------
             downloadLink: "${safeDownload}",
-            
-            // -----------------------------------------------------------
-            // 3. TEXT CONTENT
-            // Change the title and the subtitle text here.
-            // -----------------------------------------------------------
             title: "${safeTitle}",
-            // Rephrased text as requested:
             subtitle: "Follow these simple steps to instantly unlock your premium, untagged WAV file.",
         };
     <\/script>
-    <!-- *************************************************************** -->
-
 </head>
-<body class="bg-black text-white min-h-screen overflow-x-hidden antialiased selection:bg-[#0C4497] selection:text-white">
+<body class="bg-black text-white min-h-screen overflow-x-hidden antialiased">
     <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const config = window.APP_CONFIG;
-
-        // --- Icons ---
-        const LockIcon = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        );
-        const UnlockIcon = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-        );
-        const CheckIcon = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className || "lucide lucide-check"}><path d="M20 6 9 17l-5-5"/></svg>
-        );
-        const DownloadIcon = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-        );
-        const AlertIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-alert text-[#0C4497] mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-        );
-        const ExternalLinkIcon = ({ className }) => (
-             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
-        );
-        const LoaderIcon = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-loader-2 animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        );
-        const YoutubeIcon = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
-        );
-        const MailIcon = ({ className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-        );
-        const ArrowRightIcon = ({ className }) => (
-             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        );
-
-        // --- AdBlock Logic ---
-        const checkAdBlock = () => {
-            return new Promise((resolve) => {
-                const bait = document.createElement('div');
-                bait.setAttribute('class', 'adsbox ad-banner-728 pub_300x250 pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links');
-                bait.style.position = 'absolute';
-                bait.style.top = '-1000px';
-                bait.style.left = '-1000px';
-                bait.style.width = '1px';
-                bait.style.height = '1px';
-                document.body.appendChild(bait);
-
-                setTimeout(() => {
-                    const isBlocked = 
-                        bait.offsetParent === null || 
-                        bait.offsetHeight === 0 || 
-                        bait.offsetWidth === 0 || 
-                        window.getComputedStyle(bait).display === 'none';
-                    
-                    document.body.removeChild(bait);
-                    
-                    if (isBlocked) {
-                        resolve(true);
-                    } else {
-                        fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', { 
-                            method: 'HEAD', 
-                            mode: 'no-cors' 
-                        })
-                        .then(() => resolve(false))
-                        .catch(() => resolve(true));
-                    }
-                }, 150);
-            });
-        };
-
-        const useAdBlockDetector = () => {
-            const [isAdBlockActive, setIsAdBlockActive] = useState(false);
-            useEffect(() => { checkAdBlock().then(setIsAdBlockActive); }, []);
-            return isAdBlockActive;
-        };
-
-        // --- Components ---
-
-        const AdBlockModal = () => {
-            const [isChecking, setIsChecking] = useState(false);
-            const [checkFailed, setCheckFailed] = useState(false);
-
-            const handleDisableCheck = async () => {
-                if (isChecking) return;
-                setIsChecking(true);
-                setCheckFailed(false);
-                
-                // Re-run detection to verify
-                const stillActive = await checkAdBlock();
-                setIsChecking(false);
-                
-                if (stillActive) {
-                    setCheckFailed(true);
-                } else {
-                    window.location.reload();
-                }
-            };
-
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-in fade-in duration-500">
-                    <div className="bg-gray-900/90 border border-[#0C4497]/30 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl shadow-[#0C4497]/20 transform scale-100 fade-in-up">
-                        <div className="flex justify-center">
-                            <AlertIcon />
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Adblock Detected</h2>
-                        <p className="text-gray-400 mb-6 text-sm">
-                            We rely on ads to keep these beats free. Please disable your ad blocker to proceed.
-                        </p>
-                        
-                        <button 
-                            onClick={handleDisableCheck}
-                            className={\`
-                                w-full font-semibold py-3.5 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2
-                                \${checkFailed 
-                                    ? 'bg-[#082d64] text-white animate-shake ring-2 ring-[#0C4497]' 
-                                    : 'bg-[#0C4497] hover:bg-[#0a3678] hover:shadow-lg hover:shadow-[#0C4497]/40 text-white'}
-                            \`}
-                        >
-                            {isChecking ? (
-                                <LoaderIcon />
-                            ) : checkFailed ? (
-                                "Still On! Please turn it off."
-                            ) : (
-                                "I've Disabled It"
-                            )}
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        const StepButton = ({ number, link, isCompleted, onClick, index }) => {
-            return (
-                <button
-                    onClick={() => onClick(number)}
-                    style={{ animationDelay: \`\${index * 100}ms\` }}
-                    className={\`
-                        fade-in-up
-                        group relative w-full mb-4 p-4 rounded-xl border transition-all duration-300 transform active:scale-[0.98]
-                        flex items-center justify-between overflow-hidden
-                        \${isCompleted 
-                            ? 'bg-green-950/20 border-green-500/50 hover:bg-green-900/30 shadow-[0_0_15px_rgba(34,197,94,0.1)]' 
-                            : 'bg-gray-900/40 border-gray-700 hover:border-[#0C4497] hover:bg-gray-800 hover:shadow-[0_0_15px_rgba(12,68,151,0.15)]'
-                        }
-                    \`}
-                >
-                    {/* Hover Gradient Overlay */}
-                    <div className={\`absolute inset-0 transition-opacity duration-500 pointer-events-none opacity-0 group-hover:opacity-100 bg-gradient-to-r \${isCompleted ? 'from-green-500/10' : 'from-[#0C4497]/10'} to-transparent\`}></div>
-
-                    <div className="flex items-center gap-5 relative z-10">
-                        {/* Step Number Circle */}
-                        <div className={\`
-                            flex items-center justify-center w-12 h-12 rounded-full font-bold text-lg transition-all duration-500 shadow-xl border
-                            \${isCompleted 
-                                ? 'bg-green-500 border-green-400 text-black scale-100 rotate-0' 
-                                : 'bg-gray-800 border-gray-700 text-gray-500 group-hover:bg-[#0C4497] group-hover:border-[#0C4497] group-hover:text-black group-hover:scale-110 group-hover:rotate-12'
-                            }
-                        \`}>
-                            {isCompleted ? <CheckIcon className="w-6 h-6 animate-bounce-in" /> : number}
-                        </div>
-                        
-                        {/* Text Container */}
-                        <div className="flex flex-col items-start">
-                            <span className={\`font-bold text-lg transition-colors duration-300 \${isCompleted ? 'text-green-400' : 'text-gray-300 group-hover:text-white'}\`}>
-                                Step {number}
-                            </span>
-                            <span className={\`text-xs uppercase tracking-wide font-medium transition-colors duration-300 \${isCompleted ? 'text-green-600' : 'text-gray-500 group-hover:text-[#0C4497]/80'}\`}>
-                                {isCompleted ? "Completed" : "Tap to open"}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    {/* Right Side Action Indicator */}
-                    <div className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-                        {isCompleted ? (
-                           <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/30">
-                                <CheckIcon className="w-4 h-4 text-green-500" />
-                           </div>
-                        ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center group-hover:bg-[#0C4497] transition-colors duration-300">
-                                 <ArrowRightIcon className="w-4 h-4 text-gray-400 group-hover:text-black" />
-                            </div>
-                        )}
-                    </div>
-                </button>
-            );
-        };
-
-        const MainApp = () => {
-            const isAdBlockActive = useAdBlockDetector();
-            const [completedSteps, setCompletedSteps] = useState([]);
-            // Track how many times each step has been clicked
-            const [stepClickCounts, setStepClickCounts] = useState({});
-
-            const totalSteps = config.stepLinks.length;
-            const isUnlocked = completedSteps.length === totalSteps;
-
-            const handleStepClick = (stepNumber) => {
-                // 1. Always open the link to ensure traffic (and user isn't suspicious)
-                const linkIndex = stepNumber - 1;
-                if (linkIndex >= 0 && linkIndex < config.stepLinks.length) {
-                    window.open(config.stepLinks[linkIndex], '_blank');
-                }
-
-                // 2. Logic for multi-click validation (Steps 3 and 5)
-                setStepClickCounts(prev => {
-                    const currentCount = (prev[stepNumber] || 0) + 1;
-                    
-                    // Default requirement is 1 click
-                    let requiredClicks = 1;
-                    
-                    // SECRET: Make Step 3 and Step 5 require 2 clicks
-                    if (stepNumber === 3 || stepNumber === 5) {
-                        requiredClicks = 2;
-                    }
-
-                    // If we haven't completed this step yet, check if we met the requirement
-                    if (!completedSteps.includes(stepNumber)) {
-                        if (currentCount >= requiredClicks) {
-                            setCompletedSteps(prevSteps => {
-                                // Double check to avoid duplicates
-                                if (!prevSteps.includes(stepNumber)) {
-                                    return [...prevSteps, stepNumber];
-                                }
-                                return prevSteps;
-                            });
-                        }
-                    }
-
-                    return { ...prev, [stepNumber]: currentCount };
-                });
-            };
-
-            const handleDownload = () => {
-                if (isUnlocked) {
-                    window.location.href = config.downloadLink;
-                }
-            };
-
-            const progressPercentage = (completedSteps.length / totalSteps) * 100;
-
-            if (isAdBlockActive) {
-                return <AdBlockModal />;
-            }
-
-            return (
-                <div className="min-h-screen w-full bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
-                    
-                    {/* Animated Background Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-blue-950/30 animate-gradient opacity-80"></div>
-
-                    {/* Decorative Blobs */}
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0C4497]/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
-                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#0C4497]/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
-
-                    <div className="w-full max-w-md z-10 fade-in-up">
-                        
-                        {/* Header */}
-                        <div className="text-center mb-8 space-y-3">
-                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0C4497] to-blue-600 mb-2 shadow-lg shadow-blue-600/20 transform hover:scale-105 transition-transform duration-300">
-                                {isUnlocked ? <UnlockIcon className="text-black w-8 h-8" /> : <LockIcon className="text-black w-8 h-8" />}
-                            </div>
-                            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-sm uppercase">
-                                {config.title}
-                            </h1>
-                            <p className="text-gray-400 text-sm md:text-base px-4 leading-relaxed font-light">
-                                {config.subtitle}
-                            </p>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="relative w-full h-3 bg-gray-800/50 rounded-full mb-8 overflow-hidden backdrop-blur-sm border border-white/5">
-                            <div 
-                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-700 via-[#0C4497] to-blue-600 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(12,68,151,0.5)]"
-                                style={{ width: \`\${progressPercentage}%\` }}
-                            ></div>
-                        </div>
-
-                        {/* Steps Container */}
-                        <div className="space-y-3 mb-10">
-                            {config.stepLinks.map((link, index) => (
-                                <StepButton 
-                                    key={index}
-                                    index={index}
-                                    number={index + 1}
-                                    link={link}
-                                    isCompleted={completedSteps.includes(index + 1)}
-                                    onClick={handleStepClick}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Final Download Button */}
-                        <div className="relative group fade-in-up delay-5">
-                            <div className={\`absolute -inset-0.5 bg-gradient-to-r from-[#0C4497] to-blue-700 rounded-xl blur opacity-30 group-hover:opacity-75 transition duration-500 \${!isUnlocked && 'hidden'}\`}></div>
-                            <button
-                                disabled={!isUnlocked}
-                                onClick={handleDownload}
-                                className={\`
-                                    relative w-full py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 border
-                                    \${isUnlocked 
-                                        ? 'bg-gradient-to-r from-[#0C4497] to-blue-600 border-blue-400 text-black shadow-xl shadow-blue-900/20 translate-y-0 cursor-pointer glow-active hover:brightness-110' 
-                                        : 'bg-gray-800/50 border-white/5 text-gray-500 cursor-not-allowed'
-                                    }
-                                \`}
-                            >
-                                {isUnlocked ? (
-                                    <>
-                                        <DownloadIcon className="w-6 h-6 animate-bounce" />
-                                        Download Beat
-                                    </>
-                                ) : (
-                                    <>
-                                        <LockIcon className="w-5 h-5 opacity-70" />
-                                        <span>Beat Locked <span className="text-sm font-normal opacity-70 ml-1">(\${completedSteps.length}/\${totalSteps})</span></span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                        
-                        {/* Footer */}
-                        <div className="mt-12 text-center fade-in-up delay-5">
-                             <div className="h-px w-16 bg-gradient-to-r from-transparent via-gray-700 to-transparent mx-auto mb-6"></div>
-                             
-                             <div className="flex items-center justify-center gap-10 mb-8">
-                                <a href="https://youtube.com/@2knobu" target="_blank" rel="noopener noreferrer" 
-                                   className="group relative transition-transform duration-300 hover:scale-125 focus:outline-none">
-                                    <div className="absolute inset-0 bg-[#0C4497]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <YoutubeIcon className="w-8 h-8 text-gray-500 group-hover:text-[#0C4497] transition-colors duration-300 relative z-10" />
-                                </a>
-                                <a href="mailto:2knobu@gmail.com" 
-                                   className="group relative transition-transform duration-300 hover:scale-125 focus:outline-none">
-                                    <div className="absolute inset-0 bg-[#0C4497]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <MailIcon className="w-8 h-8 text-gray-500 group-hover:text-[#0C4497] transition-colors duration-300 relative z-10" />
-                                </a>
-                             </div>
-
-                             <p className="text-gray-600 text-xs">
-                                &copy; 2026 Free For Profit Beats. <br className="hidden md:block" />Secure Gateway protected.
-                            </p>
-                        </div>
-
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<MainApp />);
-    <\/script>
+    <!-- Load Main App Logic -->
+    <script type="text/babel" src="../assets/js/beat-gate-app.js"><\/script>
 </body>
 </html>`;
         };
@@ -606,7 +158,7 @@
                 setLoading(true);
                 const slug = generateSlug();
                 
-                // --- CLEAN URL CHANGE: Save to folder/index.html instead of pages/folder/index.html ---
+                // Save to folder/index.html
                 const filename = `${slug}/index.html`;
                 
                 const content = getLandingPageTemplate(form);
@@ -632,7 +184,6 @@
                     });
 
                     if (res.ok) {
-                        // --- CLEAN URL CHANGE: Clean URL in alert (Root level) ---
                         const liveUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/${slug}/`;
                         alert(`✅ SUCCESS! Beat page is live.\n\nURL: ${liveUrl}`);
                         addToHistory(slug);
@@ -663,7 +214,7 @@
             return (
                 <div className="max-w-6xl mx-auto space-y-10 pb-20">
                     <header className="text-center space-y-2 animate-slide">
-                        <h1 className="text-4xl font-black uppercase italic text-[#0C4497]">BEAT GATE ADMIN</h1>
+                        <h1 className="text-4xl font-black uppercase italic text-primary">BEAT GATE ADMIN</h1>
                         <p className="text-gray-500 text-sm">One-click deployment to GitHub Pages</p>
                     </header>
 
@@ -692,7 +243,7 @@
                                 </div>
 
                                 <div className="flex gap-3 pt-4">
-                                    <button onClick={pushToGitHub} disabled={loading} className="flex-1 py-5 bg-[#0C4497] hover:bg-[#1055bd] text-black font-black rounded-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow-blue-900/20">
+                                    <button onClick={pushToGitHub} disabled={loading} className="flex-1 py-5 btn-primary font-black rounded-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow-blue-900/20">
                                         {loading ? <div className="w-5 h-5 border-2 loader rounded-full"></div> : '🚀 PUSH TO GITHUB'}
                                     </button>
                                     <button onClick={copyCode} className="px-6 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl border border-white/10 transition-all">
@@ -703,14 +254,14 @@
                         </div>
 
                         <div className="space-y-6">
-                            <div className="glass rounded-3xl p-6 border-[#0C4497]/20 space-y-4">
-                                <h2 className="text-xs font-bold uppercase text-[#0C4497] flex items-center gap-2">⚙️ GitHub Config</h2>
+                            <div className="glass rounded-3xl p-6 border-primary/20 space-y-4">
+                                <h2 className="text-xs font-bold uppercase text-primary flex items-center gap-2">⚙️ GitHub Config</h2>
                                 <div className="space-y-3">
                                     <input name="username" value={ghConfig.username} onChange={saveGhConfig} placeholder="GitHub Username" className="input-field py-2" />
                                     <input name="repo" value={ghConfig.repo} onChange={saveGhConfig} placeholder="Repo Name (e.g. beats-site)" className="input-field py-2" />
                                     <div className="relative">
                                         <input name="token" type="password" value={ghConfig.token} onChange={saveGhConfig} placeholder="Personal Access Token" className="input-field py-2 pr-20" />
-                                        <button onClick={fillToken} className="absolute right-2 top-1.5 px-2 py-1 bg-blue-600/20 text-[#0C4497] text-[9px] font-bold rounded-md hover:bg-blue-600/40 transition-all">RESTORE</button>
+                                        <button onClick={fillToken} className="absolute right-2 top-1.5 px-2 py-1 bg-blue-600/20 text-primary text-[9px] font-bold rounded-md hover:bg-blue-600/40 transition-all">RESTORE</button>
                                     </div>
                                 </div>
                                 <p className="text-[9px] text-gray-500 leading-tight">
@@ -722,12 +273,12 @@
                                 <h2 className="text-xs font-bold uppercase text-gray-400 flex items-center gap-2">🕒 Recent Beats</h2>
                                 <div className="space-y-3 overflow-y-auto max-h-[300px] pr-1">
                                     {history.map((item, i) => (
-                                        <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] space-y-1 hover:border-[#0C4497]/30 transition-all cursor-pointer" onClick={() => setForm(item)}>
+                                        <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] space-y-1 hover:border-primary/30 transition-all cursor-pointer" onClick={() => setForm(item)}>
                                             <div className="font-bold uppercase flex justify-between">
                                                 <span>{item.title}</span>
-                                                <span className="text-[#0C4497]/50">LOAD</span>
+                                                <span className="text-primary/50">LOAD</span>
                                             </div>
-                                            {/* CLEAN URL CHANGE: Display as directory path (Root level) */}
+                                            {/* Clean URL: directory path (Root level) */}
                                             <div className="opacity-50 font-mono truncate">{item.slug}/</div>
                                         </div>
                                     ))}
