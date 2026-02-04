@@ -1,6 +1,5 @@
 // --- Main React Application ---
 // This file contains the Header, Navigation, Footer, and Logic.
-// It reads content from window.APP_CONFIG which is defined in the HTML shell.
 
 const { useState, useEffect } = React;
 
@@ -164,7 +163,13 @@ const StepButton = ({ number, link, isCompleted, onClick, index }) => {
 // --- Main Application ---
 
 const MainApp = () => {
-    const config = window.APP_CONFIG || { stepLinks: [], title: "Error", subtitle: "Configuration not loaded" };
+    // Config Check to avoid crashes if APP_CONFIG is missing
+    const config = window.APP_CONFIG || { 
+        stepLinks: [], 
+        title: "Configuration Error", 
+        subtitle: "window.APP_CONFIG is missing. Please check your HTML file." 
+    };
+    
     const isAdBlockActive = useAdBlockDetector();
     const [completedSteps, setCompletedSteps] = useState([]);
     const [stepClickCounts, setStepClickCounts] = useState({});
@@ -279,6 +284,6 @@ const MainApp = () => {
     );
 };
 
-// Render
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<MainApp />);
+// FIX: Renamed root variable to avoid conflict with config-colors.js
+const reactRoot = ReactDOM.createRoot(document.getElementById('root'));
+reactRoot.render(<MainApp />);

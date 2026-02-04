@@ -10,12 +10,13 @@ const THEME = {
 };
 
 // 1. Set CSS Variables for custom CSS (style.css)
-const root = document.documentElement;
-root.style.setProperty('--primary', THEME.primary);
-root.style.setProperty('--primary-rgb', THEME.primaryRgb);
-root.style.setProperty('--primary-hover', THEME.primaryHover);
-root.style.setProperty('--bg-color', THEME.bg);
-root.style.setProperty('--text-color', THEME.text);
+// FIX: Renamed variable from 'root' to 'themeRoot' to avoid conflict with React
+const themeRoot = document.documentElement;
+themeRoot.style.setProperty('--primary', THEME.primary);
+themeRoot.style.setProperty('--primary-rgb', THEME.primaryRgb);
+themeRoot.style.setProperty('--primary-hover', THEME.primaryHover);
+themeRoot.style.setProperty('--bg-color', THEME.bg);
+themeRoot.style.setProperty('--text-color', THEME.text);
 
 // 2. Configure Tailwind CSS to use these variables
 // This allows us to use class="bg-primary" or "text-primary"
