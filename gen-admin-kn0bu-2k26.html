@@ -26,7 +26,7 @@
     <style>
         body { background-color: #000000; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
-        .glass-heavy { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-heavy { background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .input-field { background: #1a1a1a; border: 1px solid #333; color: white; transition: all 0.3s; width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 14px; }
         .input-field:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.2); }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -48,7 +48,14 @@
         // --- UTILS: BASE64 SAFE ENCODING ---
         // GitHub API breaks with standard btoa if strings have emojis. This fixes it.
         const safeBtoa = (str) => btoa(unescape(encodeURIComponent(str)));
-        const safeAtob = (str) => decodeURIComponent(escape(atob(str)));
+        const safeAtob = (str) => {
+            try {
+                return decodeURIComponent(escape(atob(str)));
+            } catch (e) {
+                console.warn("Base64 decode warning:", e);
+                return "";
+            }
+        };
 
         // --- UTILS: PASSWORD GENERATOR ---
         const getAlgiersPassword = () => {
@@ -111,6 +118,7 @@
 
         // --- COMPONENTS ---
 
+        // FIX 1: Generic Password UI (No hints)
         const PasswordGate = ({ onSuccess }) => {
             const [input, setInput] = useState('');
             const [error, setError] = useState(false);
@@ -122,33 +130,34 @@
                     onSuccess();
                 } else {
                     setError(true);
+                    setInput('');
                     setTimeout(() => setError(false), 500);
                 }
             };
 
             return (
                 <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl">
-                    <div className={`glass p-8 rounded-2xl max-w-sm w-full text-center space-y-6 ${error ? 'animate-bounce' : ''}`}>
+                    <div className={`glass p-8 rounded-2xl max-w-sm w-full text-center space-y-6 transition-transform duration-200 ${error ? 'translate-x-[-10px] border-red-500/50' : ''}`}>
                         <div className="flex justify-center mb-2">
-                            <div className="p-3 bg-red-500/10 rounded-full border border-red-500/20">
-                                <i data-lucide="lock" className="w-8 h-8 text-red-500"></i>
+                            <div className="p-4 bg-white/5 rounded-full border border-white/10">
+                                <i data-lucide="shield-check" className="w-10 h-10 text-white"></i>
                             </div>
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold">Admin Access</h2>
-                            <p className="text-gray-500 text-sm mt-1">Enter daily security code (Algiers Time)</p>
+                            <h2 className="text-xl font-bold tracking-tight uppercase">Restricted Area</h2>
+                            <p className="text-gray-500 text-xs mt-2 uppercase tracking-widest">Authorized Personnel Only</p>
                         </div>
                         <form onSubmit={checkPassword} className="space-y-4">
                             <input 
                                 type="password" 
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="DDMMYYYY"
-                                className="input-field text-center tracking-widest text-lg font-mono"
+                                placeholder="••••••••"
+                                className="input-field text-center text-lg tracking-widest"
                                 autoFocus
                             />
-                            <button type="submit" className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
-                                UNLOCK
+                            <button type="submit" className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors text-sm uppercase tracking-wide">
+                                Authenticate
                             </button>
                         </form>
                     </div>
@@ -204,16 +213,11 @@
             
             // Filters
             const [searchTerm, setSearchTerm] = useState('');
-            const [sortMode, setSortMode] = useState('date-desc'); // date-desc, date-asc, alpha-asc, alpha-desc
+            const [sortMode, setSortMode] = useState('date-desc');
 
             // --- INIT ---
             useEffect(() => {
-                const savedConfig = JSON.parse(localStorage.getItem('admin_gh_config') || '{}');
-                setGhConfig({
-                    username: savedConfig.username || '2knobu',
-                    repo: savedConfig.repo || '2knobu.github.io',
-                    token: savedConfig.token || ''
-                });
+                loadConfigFromStorage();
                 lucide.createIcons();
             }, []);
 
@@ -227,6 +231,25 @@
                 lucide.createIcons();
             }, [history, isLocked]);
 
+            // FIX 4: Restore Saved Token Button Logic
+            const loadConfigFromStorage = () => {
+                try {
+                    const savedConfig = JSON.parse(localStorage.getItem('admin_gh_config') || '{}');
+                    setGhConfig({
+                        username: savedConfig.username || '2knobu',
+                        repo: savedConfig.repo || '2knobu.github.io',
+                        token: savedConfig.token || ''
+                    });
+                } catch (e) { console.error("Config load error", e); }
+            };
+
+            const saveGhConfig = (e) => {
+                const { name, value } = e.target;
+                const newConfig = { ...ghConfig, [name]: value.trim() };
+                setGhConfig(newConfig);
+                localStorage.setItem('admin_gh_config', JSON.stringify(newConfig));
+            };
+
             // --- CLOUD HISTORY LOGIC ---
 
             const fetchCloudHistory = async () => {
@@ -238,60 +261,77 @@
                         headers: { 'Authorization': `token ${ghConfig.token}`, 'Cache-Control': 'no-cache' } 
                     });
                     
+                    // FIX 3: Handle 404 (File not found) gracefully
+                    if (res.status === 404) {
+                        console.log("History file not found, starting empty.");
+                        setHistory([]);
+                        return;
+                    }
+
                     if (res.ok) {
                         const data = await res.json();
                         const content = safeAtob(data.content);
-                        setHistory(JSON.parse(content));
-                    } else if (res.status === 404) {
-                        // File doesn't exist yet, that's fine
-                        setHistory([]);
+                        if (content) {
+                            setHistory(JSON.parse(content));
+                        } else {
+                             setHistory([]);
+                        }
                     }
                 } catch (e) {
                     console.error("Failed to fetch history:", e);
+                    // Do not crash the app, just show empty history
+                    setHistory([]);
                 }
             };
 
+            // FIX 2: Wrapped in robust try/catch and handled SHA logic
             const updateCloudHistory = async (newEntry) => {
                 const historyPath = 'sites_history.json';
                 const url = `https://api.github.com/repos/${ghConfig.username}/${ghConfig.repo}/contents/${historyPath}`;
                 
-                // 1. Get current file (for SHA)
                 let sha = null;
                 let currentHistory = [];
                 
                 try {
+                    // 1. Get current file
                     const getRes = await fetch(url, { headers: { 'Authorization': `token ${ghConfig.token}`, 'Cache-Control': 'no-cache' } });
+                    
                     if (getRes.ok) {
                         const data = await getRes.json();
                         sha = data.sha;
-                        currentHistory = JSON.parse(safeAtob(data.content));
+                        const content = safeAtob(data.content);
+                        if (content) currentHistory = JSON.parse(content);
+                    } else if (getRes.status === 404) {
+                        // File doesn't exist, proceed with empty history and no SHA
+                        sha = null;
+                        currentHistory = [];
+                    } else {
+                        console.error("History fetch error", getRes.statusText);
                     }
-                } catch (e) { console.log('Creating new history file'); }
 
-                // 2. Append new entry
-                const updatedHistory = [newEntry, ...currentHistory];
-                
-                // 3. Push update
-                await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${ghConfig.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: `Update history: ${newEntry.title}`,
-                        content: safeBtoa(JSON.stringify(updatedHistory, null, 2)),
-                        sha: sha
-                    })
-                });
-                
-                setHistory(updatedHistory);
-            };
+                    // 2. Append new entry
+                    const updatedHistory = [newEntry, ...currentHistory];
+                    
+                    // 3. Push update
+                    const putRes = await fetch(url, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `token ${ghConfig.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: `Update history: ${newEntry.title}`,
+                            content: safeBtoa(JSON.stringify(updatedHistory, null, 2)),
+                            sha: sha // undefined/null if creating new
+                        })
+                    });
 
-            // --- ACTIONS ---
-
-            const saveGhConfig = (e) => {
-                const { name, value } = e.target;
-                const newConfig = { ...ghConfig, [name]: value.trim() };
-                setGhConfig(newConfig);
-                localStorage.setItem('admin_gh_config', JSON.stringify(newConfig));
+                    if (putRes.ok) {
+                        setHistory(updatedHistory);
+                    } else {
+                        console.error("Failed to update history JSON");
+                    }
+                } catch (e) {
+                    console.error("Cloud History Update Error:", e);
+                    // Don't throw, we want the modal to still show even if history fails
+                }
             };
 
             const generateSlug = () => form.slug.trim() || form.title.trim().toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(Date.now()/1000);
@@ -301,19 +341,23 @@
                 if (!ghConfig.token) return alert("GitHub Token required");
                 
                 setLoading(true);
-                const slug = generateSlug();
-                const filename = `${slug}/index.html`;
-                const content = getLandingPageTemplate(form);
                 
                 try {
+                    const slug = generateSlug();
+                    const filename = `${slug}/index.html`;
+                    const content = getLandingPageTemplate(form);
+
                     // 1. Check if file exists (to get SHA for update)
                     const getUrl = `https://api.github.com/repos/${ghConfig.username}/${ghConfig.repo}/contents/${filename}`;
                     let sha = null;
-                    const checkRes = await fetch(getUrl, { headers: { 'Authorization': `token ${ghConfig.token}` } });
-                    if (checkRes.ok) {
-                        const fileData = await checkRes.json();
-                        sha = fileData.sha;
-                    }
+                    
+                    try {
+                        const checkRes = await fetch(getUrl, { headers: { 'Authorization': `token ${ghConfig.token}` } });
+                        if (checkRes.ok) {
+                            const fileData = await checkRes.json();
+                            sha = fileData.sha;
+                        }
+                    } catch(e) { console.log("New file, no SHA needed"); }
 
                     // 2. Upload HTML File
                     const res = await fetch(getUrl, {
@@ -336,9 +380,10 @@
                             slug: slug,
                             url: liveUrl,
                             date: new Date().toISOString(),
-                            formData: form // Save entire form data to reload later if needed
+                            formData: form
                         };
                         
+                        // FIX 2: Ensure this doesn't crash the UI flow
                         await updateCloudHistory(historyEntry);
 
                         setSuccessData({ url: liveUrl });
@@ -348,6 +393,7 @@
                     }
                 } catch (e) {
                     alert(`Network Error: ${e.message}`);
+                    console.error(e);
                 } finally {
                     setLoading(false);
                 }
@@ -363,23 +409,23 @@
 
             // --- FILTERING LOGIC ---
             const filteredHistory = useMemo(() => {
+                if (!Array.isArray(history)) return []; // Safety check
+                
                 let res = [...history];
                 
-                // Search
                 if (searchTerm) {
                     const lower = searchTerm.toLowerCase();
                     res = res.filter(h => 
-                        h.title.toLowerCase().includes(lower) || 
-                        h.slug.toLowerCase().includes(lower)
+                        (h.title && h.title.toLowerCase().includes(lower)) || 
+                        (h.slug && h.slug.toLowerCase().includes(lower))
                     );
                 }
 
-                // Sort
                 res.sort((a, b) => {
                     if (sortMode === 'date-desc') return new Date(b.date) - new Date(a.date);
                     if (sortMode === 'date-asc') return new Date(a.date) - new Date(b.date);
-                    if (sortMode === 'alpha-asc') return a.title.localeCompare(b.title);
-                    if (sortMode === 'alpha-desc') return b.title.localeCompare(a.title);
+                    if (sortMode === 'alpha-asc') return (a.title || "").localeCompare(b.title || "");
+                    if (sortMode === 'alpha-desc') return (b.title || "").localeCompare(a.title || "");
                     return 0;
                 });
 
@@ -398,15 +444,23 @@
                             <h1 className="text-4xl font-black uppercase italic text-primary tracking-tighter">BEAT GATE ADMIN</h1>
                             <p className="text-gray-500 text-xs tracking-widest uppercase">Cloud Sync • Secure • Fast</p>
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 items-center w-full md:w-auto">
                             <input 
                                 name="token" 
                                 type="password" 
                                 value={ghConfig.token} 
                                 onChange={saveGhConfig} 
                                 placeholder="GitHub Token" 
-                                className="input-field w-40 md:w-64 border-primary/30 focus:border-primary"
+                                className="input-field flex-1 md:w-64 border-primary/30 focus:border-primary"
                             />
+                            {/* FIX 4: Restore Saved Button */}
+                            <button 
+                                onClick={loadConfigFromStorage}
+                                title="Load saved token"
+                                className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors border border-white/10"
+                            >
+                                <i data-lucide="refresh-cw" className="w-4 h-4"></i>
+                            </button>
                         </div>
                     </header>
 
