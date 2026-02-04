@@ -3,6 +3,29 @@
 
 const { useState, useEffect } = React;
 
+// --- Path Helper ---
+// Determines the path to the 'assets' folder relative to the current page
+const getAssetBase = () => {
+    // 1. Check if explicitly defined in window.APP_CONFIG
+    if (window.APP_CONFIG && window.APP_CONFIG.assetPath) {
+        return window.APP_CONFIG.assetPath.replace(/\/$/, ''); // Remove trailing slash
+    }
+    // 2. Auto-detect based on where this script was loaded from
+    const script = document.currentScript || document.querySelector('script[src*="beat-gate-app.js"]');
+    if (script) {
+        const src = script.getAttribute('src');
+        // If src is "../assets/js/beat-gate-app.js", this returns "../assets"
+        // If src is "assets/js/beat-gate-app.js", this returns "assets"
+        if (src.includes('/js/beat-gate-app.js')) {
+            return src.replace(/\/js\/beat-gate-app\.js.*$/, '');
+        }
+    }
+    // 3. Fallback
+    return 'assets';
+};
+
+const ASSET_PATH = getAssetBase();
+
 // --- Icons Component Collection ---
 const Icons = {
     Lock: ({ className }) => (
