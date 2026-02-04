@@ -16,36 +16,61 @@
     <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Load Theme Config for Admin Panel consistency -->
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Load Theme Config -->
     <script src="assets/js/config-colors.js"></script>
     <link rel="stylesheet" href="assets/css/style.css">
 
     <style>
         body { background-color: #000000; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+        .glass-heavy { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .input-field { background: #1a1a1a; border: 1px solid #333; color: white; transition: all 0.3s; width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 14px; }
         .input-field:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.2); }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-slide { animation: slideIn 0.4s ease forwards; }
         .loader { border-top-color: var(--primary); animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Override specifically for admin panel buttons */
-        .btn-primary { background-color: var(--primary); color: #000; }
-        .btn-primary:hover { background-color: var(--primary-hover); }
-        .text-primary { color: var(--primary); }
+        /* Custom Scrollbar for History */
+        .history-scroll::-webkit-scrollbar { width: 4px; }
+        .history-scroll::-webkit-scrollbar-track { background: transparent; }
+        .history-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
     </style>
 </head>
 <body class="p-4 md:p-12 min-h-screen">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
+
+        // --- UTILS: BASE64 SAFE ENCODING ---
+        // GitHub API breaks with standard btoa if strings have emojis. This fixes it.
+        const safeBtoa = (str) => btoa(unescape(encodeURIComponent(str)));
+        const safeAtob = (str) => decodeURIComponent(escape(atob(str)));
+
+        // --- UTILS: PASSWORD GENERATOR ---
+        const getAlgiersPassword = () => {
+            const formatter = new Intl.DateTimeFormat('en-GB', {
+                timeZone: 'Africa/Algiers',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = formatter.formatToParts(new Date());
+            const day = parts.find(p => p.type === 'day').value;
+            const month = parts.find(p => p.type === 'month').value;
+            const year = parts.find(p => p.type === 'year').value;
+            return `${day}${month}${year}`; // DDMMYYYY
+        };
 
         const escapeHtml = (text) => {
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return String(text).replace(/[&<>"']/g, m => map[m]);
         };
 
+        // --- TEMPLATE GENERATOR ---
         const getLandingPageTemplate = (data) => {
             const safeTitle = escapeHtml(data.title.trim());
             const safeStep1 = escapeHtml(data.step1.trim());
@@ -55,42 +80,22 @@
             const safeStep5 = escapeHtml(data.step5.trim());
             const safeDownload = escapeHtml(data.download.trim());
 
-            // --- THE SHELL TEMPLATE ---
-            // Uses ../assets/ because pages are located in /slug/index.html (one level deep)
             return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${safeTitle} - Download</title>
-    
-    <!-- External CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
-
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"><\/script>
-    
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>
-    
-    <!-- Babel Standalone (for JSX) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
-
-    <!-- Theme Config -->
     <script src="../assets/js/config-colors.js"><\/script>
-    
-    <!-- Page Specific Data -->
     <script>
         window.APP_CONFIG = {
             assetPath: "../assets",
-            stepLinks: [
-                "${safeStep1}",
-                "${safeStep2}",
-                "${safeStep3}",
-                "${safeStep4}",
-                "${safeStep5}"
-            ],
+            stepLinks: ["${safeStep1}", "${safeStep2}", "${safeStep3}", "${safeStep4}", "${safeStep5}"],
             downloadLink: "${safeDownload}",
             title: "${safeTitle}",
             subtitle: "Follow these simple steps to instantly unlock your premium, untagged WAV file.",
@@ -99,28 +104,188 @@
 </head>
 <body class="bg-black text-white min-h-screen overflow-x-hidden antialiased">
     <div id="root"></div>
-
-    <!-- Load Main App Logic -->
     <script type="text/babel" src="../assets/js/beat-gate-app.js"><\/script>
 </body>
 </html>`;
         };
 
+        // --- COMPONENTS ---
+
+        const PasswordGate = ({ onSuccess }) => {
+            const [input, setInput] = useState('');
+            const [error, setError] = useState(false);
+
+            const checkPassword = (e) => {
+                e.preventDefault();
+                const target = getAlgiersPassword();
+                if (input === target) {
+                    onSuccess();
+                } else {
+                    setError(true);
+                    setTimeout(() => setError(false), 500);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl">
+                    <div className={`glass p-8 rounded-2xl max-w-sm w-full text-center space-y-6 ${error ? 'animate-bounce' : ''}`}>
+                        <div className="flex justify-center mb-2">
+                            <div className="p-3 bg-red-500/10 rounded-full border border-red-500/20">
+                                <i data-lucide="lock" className="w-8 h-8 text-red-500"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold">Admin Access</h2>
+                            <p className="text-gray-500 text-sm mt-1">Enter daily security code (Algiers Time)</p>
+                        </div>
+                        <form onSubmit={checkPassword} className="space-y-4">
+                            <input 
+                                type="password" 
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="DDMMYYYY"
+                                className="input-field text-center tracking-widest text-lg font-mono"
+                                autoFocus
+                            />
+                            <button type="submit" className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                                UNLOCK
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const SuccessModal = ({ isOpen, onClose, data }) => {
+            if (!isOpen) return null;
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(data.url);
+                alert("URL Copied!");
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-slide">
+                    <div className="glass-heavy border border-green-500/30 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_50px_rgba(34,197,94,0.15)]">
+                        <div className="flex justify-center">
+                            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500">
+                                <i data-lucide="check" className="w-8 h-8 text-green-500"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h2 className="text-3xl font-black uppercase text-white">Live!</h2>
+                            <p className="text-green-400 font-medium">Beat page deployed successfully</p>
+                        </div>
+                        
+                        <div className="bg-black/50 p-4 rounded-xl border border-white/10 break-all">
+                            <a href={data.url} target="_blank" className="text-blue-400 text-sm hover:underline">{data.url}</a>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={copyToClipboard} className="py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 flex items-center justify-center gap-2">
+                                <i data-lucide="copy" className="w-4 h-4"></i> Copy Link
+                            </button>
+                            <button onClick={onClose} className="py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const Generator = () => {
+            const [isLocked, setIsLocked] = useState(true);
             const [form, setForm] = useState({ title: '', step1: '', step2: '', step3: '', step4: '', step5: '', download: '', slug: '' });
             const [ghConfig, setGhConfig] = useState({ username: '2knobu', repo: '2knobu.github.io', token: '' });
-            const [history, setHistory] = useState([]);
+            const [history, setHistory] = useState([]); // Cloud history
             const [loading, setLoading] = useState(false);
+            const [successData, setSuccessData] = useState(null);
+            
+            // Filters
+            const [searchTerm, setSearchTerm] = useState('');
+            const [sortMode, setSortMode] = useState('date-desc'); // date-desc, date-asc, alpha-asc, alpha-desc
+
+            // --- INIT ---
+            useEffect(() => {
+                const savedConfig = JSON.parse(localStorage.getItem('admin_gh_config') || '{}');
+                setGhConfig({
+                    username: savedConfig.username || '2knobu',
+                    repo: savedConfig.repo || '2knobu.github.io',
+                    token: savedConfig.token || ''
+                });
+                lucide.createIcons();
+            }, []);
 
             useEffect(() => {
-                setHistory(JSON.parse(localStorage.getItem('admin_gate_history_2k26') || '[]'));
-                const saved = JSON.parse(localStorage.getItem('admin_gh_config') || '{}');
-                setGhConfig({
-                    username: saved.username || '2knobu',
-                    repo: saved.repo || '2knobu.github.io',
-                    token: saved.token || ''
+                if (!isLocked && ghConfig.token) {
+                    fetchCloudHistory();
+                }
+            }, [isLocked, ghConfig.token]);
+
+            useEffect(() => {
+                lucide.createIcons();
+            }, [history, isLocked]);
+
+            // --- CLOUD HISTORY LOGIC ---
+
+            const fetchCloudHistory = async () => {
+                if (!ghConfig.username || !ghConfig.repo || !ghConfig.token) return;
+                
+                try {
+                    const url = `https://api.github.com/repos/${ghConfig.username}/${ghConfig.repo}/contents/sites_history.json`;
+                    const res = await fetch(url, { 
+                        headers: { 'Authorization': `token ${ghConfig.token}`, 'Cache-Control': 'no-cache' } 
+                    });
+                    
+                    if (res.ok) {
+                        const data = await res.json();
+                        const content = safeAtob(data.content);
+                        setHistory(JSON.parse(content));
+                    } else if (res.status === 404) {
+                        // File doesn't exist yet, that's fine
+                        setHistory([]);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch history:", e);
+                }
+            };
+
+            const updateCloudHistory = async (newEntry) => {
+                const historyPath = 'sites_history.json';
+                const url = `https://api.github.com/repos/${ghConfig.username}/${ghConfig.repo}/contents/${historyPath}`;
+                
+                // 1. Get current file (for SHA)
+                let sha = null;
+                let currentHistory = [];
+                
+                try {
+                    const getRes = await fetch(url, { headers: { 'Authorization': `token ${ghConfig.token}`, 'Cache-Control': 'no-cache' } });
+                    if (getRes.ok) {
+                        const data = await getRes.json();
+                        sha = data.sha;
+                        currentHistory = JSON.parse(safeAtob(data.content));
+                    }
+                } catch (e) { console.log('Creating new history file'); }
+
+                // 2. Append new entry
+                const updatedHistory = [newEntry, ...currentHistory];
+                
+                // 3. Push update
+                await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${ghConfig.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: `Update history: ${newEntry.title}`,
+                        content: safeBtoa(JSON.stringify(updatedHistory, null, 2)),
+                        sha: sha
+                    })
                 });
-            }, []);
+                
+                setHistory(updatedHistory);
+            };
+
+            // --- ACTIONS ---
 
             const saveGhConfig = (e) => {
                 const { name, value } = e.target;
@@ -129,41 +294,19 @@
                 localStorage.setItem('admin_gh_config', JSON.stringify(newConfig));
             };
 
-            const fillToken = () => {
-                const a = "ghp_pmCF28";
-                const b = "EOYlbrhpO";
-                const c = "ANhcKlZPJ";
-                const d = "0SbBd724T";
-                const e = "b5q";
-                const fullToken = a + b + c + d + e;
-                const newConfig = { ...ghConfig, token: fullToken };
-                setGhConfig(newConfig);
-                localStorage.setItem('admin_gh_config', JSON.stringify(newConfig));
-                alert("🔑 Token restored to local configuration!");
-            };
-
-            const validate = () => {
-                if (!form.title.trim()) return alert("Title required");
-                const urls = [form.step1, form.step2, form.step3, form.step4, form.step5, form.download];
-                if (urls.some(u => !u.trim().startsWith('http'))) return alert("All links must start with http:// or https://");
-                return true;
-            };
-
             const generateSlug = () => form.slug.trim() || form.title.trim().toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(Date.now()/1000);
 
             const pushToGitHub = async () => {
-                if (!validate()) return;
-                if (!ghConfig.username || !ghConfig.repo || !ghConfig.token) return alert("Please fill configuration!");
+                if (!form.title) return alert("Title required");
+                if (!ghConfig.token) return alert("GitHub Token required");
                 
                 setLoading(true);
                 const slug = generateSlug();
-                
-                // Save to folder/index.html
                 const filename = `${slug}/index.html`;
-                
                 const content = getLandingPageTemplate(form);
                 
                 try {
+                    // 1. Check if file exists (to get SHA for update)
                     const getUrl = `https://api.github.com/repos/${ghConfig.username}/${ghConfig.repo}/contents/${filename}`;
                     let sha = null;
                     const checkRes = await fetch(getUrl, { headers: { 'Authorization': `token ${ghConfig.token}` } });
@@ -172,12 +315,13 @@
                         sha = fileData.sha;
                     }
 
+                    // 2. Upload HTML File
                     const res = await fetch(getUrl, {
                         method: 'PUT',
                         headers: { 'Authorization': `token ${ghConfig.token}`, 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            message: `Add beat page: ${slug}`,
-                            content: btoa(unescape(encodeURIComponent(content))),
+                            message: `Deploy beat: ${slug}`,
+                            content: safeBtoa(content),
                             sha: sha,
                             branch: 'main'
                         })
@@ -185,104 +329,192 @@
 
                     if (res.ok) {
                         const liveUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/${slug}/`;
-                        alert(`✅ SUCCESS! Beat page is live.\n\nURL: ${liveUrl}`);
-                        addToHistory(slug);
+                        
+                        // 3. Update JSON History
+                        const historyEntry = {
+                            title: form.title,
+                            slug: slug,
+                            url: liveUrl,
+                            date: new Date().toISOString(),
+                            formData: form // Save entire form data to reload later if needed
+                        };
+                        
+                        await updateCloudHistory(historyEntry);
+
+                        setSuccessData({ url: liveUrl });
                     } else {
                         const err = await res.json();
-                        alert(`❌ GitHub Error: ${err.message}`);
+                        alert(`GitHub Error: ${err.message}`);
                     }
                 } catch (e) {
-                    alert(`❌ Network Error: ${e.message}`);
+                    alert(`Network Error: ${e.message}`);
                 } finally {
                     setLoading(false);
                 }
             };
 
-            const addToHistory = (slug) => {
-                const newEntry = { ...form, slug, date: new Date().toLocaleString() };
-                const newHistory = [newEntry, ...history].slice(0, 20);
-                setHistory(newHistory);
-                localStorage.setItem('admin_gate_history_2k26', JSON.stringify(newHistory));
+            const loadFromHistory = (item) => {
+                if (item.formData) {
+                    setForm(item.formData);
+                } else {
+                    setForm({ ...form, title: item.title, slug: item.slug });
+                }
             };
 
-            const copyCode = () => {
-                if (!validate()) return;
-                navigator.clipboard.writeText(getLandingPageTemplate(form));
-                alert("📋 HTML Code copied to clipboard!");
-            };
+            // --- FILTERING LOGIC ---
+            const filteredHistory = useMemo(() => {
+                let res = [...history];
+                
+                // Search
+                if (searchTerm) {
+                    const lower = searchTerm.toLowerCase();
+                    res = res.filter(h => 
+                        h.title.toLowerCase().includes(lower) || 
+                        h.slug.toLowerCase().includes(lower)
+                    );
+                }
+
+                // Sort
+                res.sort((a, b) => {
+                    if (sortMode === 'date-desc') return new Date(b.date) - new Date(a.date);
+                    if (sortMode === 'date-asc') return new Date(a.date) - new Date(b.date);
+                    if (sortMode === 'alpha-asc') return a.title.localeCompare(b.title);
+                    if (sortMode === 'alpha-desc') return b.title.localeCompare(a.title);
+                    return 0;
+                });
+
+                return res;
+            }, [history, searchTerm, sortMode]);
+
+
+            if (isLocked) return <PasswordGate onSuccess={() => setIsLocked(false)} />;
 
             return (
-                <div className="max-w-6xl mx-auto space-y-10 pb-20">
-                    <header className="text-center space-y-2 animate-slide">
-                        <h1 className="text-4xl font-black uppercase italic text-primary">BEAT GATE ADMIN</h1>
-                        <p className="text-gray-500 text-sm">One-click deployment to GitHub Pages</p>
+                <div className="max-w-7xl mx-auto space-y-8 pb-20">
+                    <SuccessModal isOpen={!!successData} onClose={() => setSuccessData(null)} data={successData || {}} />
+
+                    <header className="flex flex-col md:flex-row justify-between items-center gap-4 animate-slide">
+                        <div>
+                            <h1 className="text-4xl font-black uppercase italic text-primary tracking-tighter">BEAT GATE ADMIN</h1>
+                            <p className="text-gray-500 text-xs tracking-widest uppercase">Cloud Sync • Secure • Fast</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <input 
+                                name="token" 
+                                type="password" 
+                                value={ghConfig.token} 
+                                onChange={saveGhConfig} 
+                                placeholder="GitHub Token" 
+                                className="input-field w-40 md:w-64 border-primary/30 focus:border-primary"
+                            />
+                        </div>
                     </header>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        
+                        {/* LEFT: GENERATOR FORM */}
+                        <div className="lg:col-span-8 space-y-6">
                             <div className="glass rounded-[2rem] p-8 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="md:col-span-2 space-y-1">
                                         <label className="text-[10px] font-bold text-gray-500 uppercase px-2">Beat Title</label>
-                                        <input name="title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="2026 DARK TRAP" className="input-field" />
+                                        <input name="title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="2026 DARK TRAP" className="input-field text-lg font-bold" />
                                     </div>
+                                    
                                     {[1,2,3,4,5].map(n => (
-                                        <div key={n} className="space-y-1">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase px-2">Step {n} Link {(n===3||n===5) && '(2 Clicks)'}</label>
-                                            <input value={form['step'+n]} onChange={e => setForm({...form, ['step'+n]: e.target.value})} placeholder="https://..." className="input-field" />
+                                        <div key={n} className="space-y-1 relative">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase px-2 flex justify-between">
+                                                <span>Step {n}</span>
+                                                {(n===3||n===5) && <span className="text-primary text-[9px] border border-primary/50 px-1 rounded">2 CLICKS</span>}
+                                            </label>
+                                            <div className="relative">
+                                                <i data-lucide="link" className="absolute left-3 top-2.5 w-4 h-4 text-gray-600"></i>
+                                                <input value={form['step'+n]} onChange={e => setForm({...form, ['step'+n]: e.target.value})} placeholder="https://..." className="input-field pl-10" />
+                                            </div>
                                         </div>
                                     ))}
+                                    
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase px-2">Slug</label>
-                                        <input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} placeholder="my-beat-name" className="input-field" />
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase px-2">Custom Slug (Optional)</label>
+                                        <input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} placeholder="auto-generated" className="input-field" />
                                     </div>
+                                    
                                     <div className="md:col-span-2 space-y-1">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase px-2">Download URL</label>
-                                        <input value={form.download} onChange={e => setForm({...form, download: e.target.value})} placeholder="https://mediafire.com/..." className="input-field" />
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase px-2 text-green-400">Final Download URL</label>
+                                        <input value={form.download} onChange={e => setForm({...form, download: e.target.value})} placeholder="https://mediafire.com/..." className="input-field border-green-500/20 focus:border-green-500/50" />
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-4">
-                                    <button onClick={pushToGitHub} disabled={loading} className="flex-1 py-5 btn-primary font-black rounded-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow-blue-900/20">
-                                        {loading ? <div className="w-5 h-5 border-2 loader rounded-full"></div> : '🚀 PUSH TO GITHUB'}
-                                    </button>
-                                    <button onClick={copyCode} className="px-6 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl border border-white/10 transition-all">
-                                        📋 COPY CODE
-                                    </button>
-                                </div>
+                                <button onClick={pushToGitHub} disabled={loading} className="w-full py-5 btn-primary font-black text-lg rounded-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow-blue-900/20 hover:scale-[1.01] active:scale-[0.99]">
+                                    {loading ? <div className="w-6 h-6 border-4 loader rounded-full"></div> : <><i data-lucide="rocket"></i> PUSH TO CLOUD</>}
+                                </button>
                             </div>
                         </div>
 
-                        <div className="space-y-6">
-                            <div className="glass rounded-3xl p-6 border-primary/20 space-y-4">
-                                <h2 className="text-xs font-bold uppercase text-primary flex items-center gap-2">⚙️ GitHub Config</h2>
-                                <div className="space-y-3">
-                                    <input name="username" value={ghConfig.username} onChange={saveGhConfig} placeholder="GitHub Username" className="input-field py-2" />
-                                    <input name="repo" value={ghConfig.repo} onChange={saveGhConfig} placeholder="Repo Name (e.g. beats-site)" className="input-field py-2" />
-                                    <div className="relative">
-                                        <input name="token" type="password" value={ghConfig.token} onChange={saveGhConfig} placeholder="Personal Access Token" className="input-field py-2 pr-20" />
-                                        <button onClick={fillToken} className="absolute right-2 top-1.5 px-2 py-1 bg-blue-600/20 text-primary text-[9px] font-bold rounded-md hover:bg-blue-600/40 transition-all">RESTORE</button>
-                                    </div>
+                        {/* RIGHT: CLOUD HISTORY */}
+                        <div className="lg:col-span-4 space-y-4 h-full flex flex-col">
+                            <div className="glass rounded-3xl p-6 flex-1 flex flex-col min-h-[500px]">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xs font-bold uppercase text-primary flex items-center gap-2">
+                                        <i data-lucide="cloud" className="w-4 h-4"></i> Cloud History
+                                    </h2>
+                                    <span className="text-[10px] text-gray-500">{history.length} Sites</span>
                                 </div>
-                                <p className="text-[9px] text-gray-500 leading-tight">
-                                    Username and Repo are pre-filled. Click <b>RESTORE</b> to fill your token. Settings are saved in your browser.
-                                </p>
-                            </div>
 
-                            <div className="glass rounded-3xl p-6 space-y-4">
-                                <h2 className="text-xs font-bold uppercase text-gray-400 flex items-center gap-2">🕒 Recent Beats</h2>
-                                <div className="space-y-3 overflow-y-auto max-h-[300px] pr-1">
-                                    {history.map((item, i) => (
-                                        <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] space-y-1 hover:border-primary/30 transition-all cursor-pointer" onClick={() => setForm(item)}>
-                                            <div className="font-bold uppercase flex justify-between">
-                                                <span>{item.title}</span>
-                                                <span className="text-primary/50">LOAD</span>
-                                            </div>
-                                            {/* Clean URL: directory path (Root level) */}
-                                            <div className="opacity-50 font-mono truncate">{item.slug}/</div>
+                                {/* Filters */}
+                                <div className="space-y-2 mb-4">
+                                    <div className="relative">
+                                        <i data-lucide="search" className="absolute left-3 top-2.5 w-4 h-4 text-gray-500"></i>
+                                        <input 
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            placeholder="Search beats..." 
+                                            className="input-field pl-9 py-2 bg-black/40 border-none text-xs"
+                                        />
+                                    </div>
+                                    <select 
+                                        value={sortMode}
+                                        onChange={(e) => setSortMode(e.target.value)}
+                                        className="input-field py-2 bg-black/40 border-none text-xs cursor-pointer"
+                                    >
+                                        <option value="date-desc">Newest First</option>
+                                        <option value="date-asc">Oldest First</option>
+                                        <option value="alpha-asc">A-Z</option>
+                                    </select>
+                                </div>
+
+                                {/* List */}
+                                <div className="flex-1 overflow-y-auto history-scroll space-y-2 pr-2 max-h-[600px]">
+                                    {filteredHistory.length === 0 ? (
+                                        <div className="text-center py-10 text-gray-600">
+                                            <i data-lucide="ghost" className="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                                            <p className="text-xs">No beats found.</p>
                                         </div>
-                                    ))}
-                                    {history.length === 0 && <p className="text-[10px] text-gray-600 italic text-center py-4">No recent history</p>}
+                                    ) : (
+                                        filteredHistory.map((item, i) => (
+                                            <div key={i} className="group p-3 bg-white/5 rounded-xl border border-white/5 hover:border-primary/50 hover:bg-white/10 transition-all">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="font-bold text-sm truncate w-3/4 text-gray-200">{item.title}</span>
+                                                    <button 
+                                                        onClick={() => {navigator.clipboard.writeText(item.url); alert('Copied!');}}
+                                                        className="text-gray-500 hover:text-white"
+                                                        title="Copy Link"
+                                                    >
+                                                        <i data-lucide="copy" className="w-3 h-3"></i>
+                                                    </button>
+                                                </div>
+                                                <div className="flex justify-between items-center mt-2">
+                                                    <span className="text-[10px] text-gray-500 font-mono">{new Date(item.date).toLocaleDateString()}</span>
+                                                    <button 
+                                                        onClick={() => loadFromHistory(item)}
+                                                        className="text-[9px] font-bold bg-primary/20 text-primary px-2 py-1 rounded hover:bg-primary hover:text-black transition-colors"
+                                                    >
+                                                        LOAD
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </div>
