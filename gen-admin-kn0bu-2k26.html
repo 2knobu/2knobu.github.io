@@ -20,13 +20,13 @@
         body { background-color: #000000; color: #ffffff; font-family: system-ui, -apple-system, sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
         .input-field { background: #1a1a1a; border: 1px solid #333; color: white; transition: all 0.3s; width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 14px; }
-        .input-field:focus { border-color: #ca8a04; outline: none; box-shadow: 0 0 10px rgba(202, 138, 4, 0.2); }
+        .input-field:focus { border-color: #fc1c1c; outline: none; box-shadow: 0 0 10px rgba(252, 28, 28, 0.2); }
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-slide { animation: slideIn 0.4s ease forwards; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #000; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        .loader { border-top-color: #ca8a04; animation: spinner 1.5s linear infinite; }
+        .loader { border-top-color: #fc1c1c; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -52,6 +52,7 @@
 
             // EXACT CARBON COPY of index.html source code, including original formatting and comments
             // FIX: Using ${variable} for main interpolation and \${variable} for nested React templates
+            // THEME: Updated to #fc1c1c (Dark Red)
             return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,7 +87,7 @@
             background: #0f0f0f;
         }
         ::-webkit-scrollbar-thumb {
-            background: #ca8a04;
+            background: #fc1c1c;
             border-radius: 10px;
         }
 
@@ -138,8 +139,8 @@
 
         /* Pulse glow for unlocked state */
         @keyframes softPulse {
-            0%, 100% { box-shadow: 0 0 15px rgba(234, 179, 8, 0.2); }
-            50% { box-shadow: 0 0 30px rgba(234, 179, 8, 0.5); }
+            0%, 100% { box-shadow: 0 0 15px rgba(252, 28, 28, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(252, 28, 28, 0.5); }
         }
         .glow-active {
             animation: softPulse 3s infinite;
@@ -195,7 +196,7 @@
     <!-- *************************************************************** -->
 
 </head>
-<body class="bg-black text-white min-h-screen overflow-x-hidden antialiased selection:bg-yellow-500 selection:text-black">
+<body class="bg-black text-white min-h-screen overflow-x-hidden antialiased selection:bg-[#fc1c1c] selection:text-white">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -341,12 +342,12 @@
                         flex items-center justify-between overflow-hidden
                         \${isCompleted 
                             ? 'bg-green-950/20 border-green-500/50 hover:bg-green-900/30 shadow-[0_0_15px_rgba(34,197,94,0.1)]' 
-                            : 'bg-gray-900/40 border-gray-700 hover:border-yellow-500 hover:bg-gray-800 hover:shadow-[0_0_15px_rgba(234,179,8,0.15)]'
+                            : 'bg-gray-900/40 border-gray-700 hover:border-[#fc1c1c] hover:bg-gray-800 hover:shadow-[0_0_15px_rgba(252,28,28,0.15)]'
                         }
                     \`}
                 >
                     {/* Hover Gradient Overlay */}
-                    <div className={\`absolute inset-0 transition-opacity duration-500 pointer-events-none opacity-0 group-hover:opacity-100 bg-gradient-to-r \${isCompleted ? 'from-green-500/10' : 'from-yellow-500/10'} to-transparent\`}></div>
+                    <div className={\`absolute inset-0 transition-opacity duration-500 pointer-events-none opacity-0 group-hover:opacity-100 bg-gradient-to-r \${isCompleted ? 'from-green-500/10' : 'from-[#fc1c1c]/10'} to-transparent\`}></div>
 
                     <div className="flex items-center gap-5 relative z-10">
                         {/* Step Number Circle */}
@@ -354,7 +355,7 @@
                             flex items-center justify-center w-12 h-12 rounded-full font-bold text-lg transition-all duration-500 shadow-xl border
                             \${isCompleted 
                                 ? 'bg-green-500 border-green-400 text-black scale-100 rotate-0' 
-                                : 'bg-gray-800 border-gray-700 text-gray-500 group-hover:bg-yellow-500 group-hover:border-yellow-400 group-hover:text-black group-hover:scale-110 group-hover:rotate-12'
+                                : 'bg-gray-800 border-gray-700 text-gray-500 group-hover:bg-[#fc1c1c] group-hover:border-[#fc1c1c] group-hover:text-black group-hover:scale-110 group-hover:rotate-12'
                             }
                         \`}>
                             {isCompleted ? <CheckIcon className="w-6 h-6 animate-bounce-in" /> : number}
@@ -365,7 +366,7 @@
                             <span className={\`font-bold text-lg transition-colors duration-300 \${isCompleted ? 'text-green-400' : 'text-gray-300 group-hover:text-white'}\`}>
                                 Step {number}
                             </span>
-                            <span className={\`text-xs uppercase tracking-wide font-medium transition-colors duration-300 \${isCompleted ? 'text-green-600' : 'text-gray-500 group-hover:text-yellow-500/80'}\`}>
+                            <span className={\`text-xs uppercase tracking-wide font-medium transition-colors duration-300 \${isCompleted ? 'text-green-600' : 'text-gray-500 group-hover:text-[#fc1c1c]/80'}\`}>
                                 {isCompleted ? "Completed" : "Tap to open"}
                             </span>
                         </div>
@@ -378,7 +379,7 @@
                                 <CheckIcon className="w-4 h-4 text-green-500" />
                            </div>
                         ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center group-hover:bg-yellow-500 transition-colors duration-300">
+                            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center group-hover:bg-[#fc1c1c] transition-colors duration-300">
                                  <ArrowRightIcon className="w-4 h-4 text-gray-400 group-hover:text-black" />
                             </div>
                         )}
@@ -448,17 +449,17 @@
                 <div className="min-h-screen w-full bg-black flex flex-col items-center justify-center p-4 relative overflow-hidden">
                     
                     {/* Animated Background Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-yellow-950/30 animate-gradient opacity-80"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-red-950/30 animate-gradient opacity-80"></div>
 
                     {/* Decorative Blobs */}
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
-                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-red-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
+                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-red-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
 
                     <div className="w-full max-w-md z-10 fade-in-up">
                         
                         {/* Header */}
                         <div className="text-center mb-8 space-y-3">
-                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-yellow-500 to-yellow-300 mb-2 shadow-lg shadow-yellow-500/20 transform hover:scale-105 transition-transform duration-300">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#fc1c1c] to-red-500 mb-2 shadow-lg shadow-red-500/20 transform hover:scale-105 transition-transform duration-300">
                                 {isUnlocked ? <UnlockIcon className="text-black w-8 h-8" /> : <LockIcon className="text-black w-8 h-8" />}
                             </div>
                             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-sm uppercase">
@@ -472,7 +473,7 @@
                         {/* Progress Bar */}
                         <div className="relative w-full h-3 bg-gray-800/50 rounded-full mb-8 overflow-hidden backdrop-blur-sm border border-white/5">
                             <div 
-                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-300 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(234,179,8,0.5)]"
+                                className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-700 via-[#fc1c1c] to-red-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(252,28,28,0.5)]"
                                 style={{ width: \`\${progressPercentage}%\` }}
                             ></div>
                         </div>
@@ -493,14 +494,14 @@
 
                         {/* Final Download Button */}
                         <div className="relative group fade-in-up delay-5">
-                            <div className={\`absolute -inset-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl blur opacity-30 group-hover:opacity-75 transition duration-500 \${!isUnlocked && 'hidden'}\`}></div>
+                            <div className={\`absolute -inset-0.5 bg-gradient-to-r from-[#fc1c1c] to-red-600 rounded-xl blur opacity-30 group-hover:opacity-75 transition duration-500 \${!isUnlocked && 'hidden'}\`}></div>
                             <button
                                 disabled={!isUnlocked}
                                 onClick={handleDownload}
                                 className={\`
                                     relative w-full py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 border
                                     \${isUnlocked 
-                                        ? 'bg-gradient-to-r from-yellow-500 to-yellow-400 border-yellow-300 text-black shadow-xl shadow-yellow-900/20 translate-y-0 cursor-pointer glow-active hover:brightness-110' 
+                                        ? 'bg-gradient-to-r from-[#fc1c1c] to-red-500 border-red-400 text-black shadow-xl shadow-red-900/20 translate-y-0 cursor-pointer glow-active hover:brightness-110' 
                                         : 'bg-gray-800/50 border-white/5 text-gray-500 cursor-not-allowed'
                                     }
                                 \`}
@@ -531,8 +532,8 @@
                                 </a>
                                 <a href="mailto:2knobu@gmail.com" 
                                    className="group relative transition-transform duration-300 hover:scale-125 focus:outline-none">
-                                    <div className="absolute inset-0 bg-yellow-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <MailIcon className="w-8 h-8 text-gray-500 group-hover:text-yellow-400 transition-colors duration-300 relative z-10" />
+                                    <div className="absolute inset-0 bg-[#fc1c1c]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <MailIcon className="w-8 h-8 text-gray-500 group-hover:text-[#fc1c1c] transition-colors duration-300 relative z-10" />
                                 </a>
                              </div>
 
@@ -662,7 +663,7 @@
             return (
                 <div className="max-w-6xl mx-auto space-y-10 pb-20">
                     <header className="text-center space-y-2 animate-slide">
-                        <h1 className="text-4xl font-black uppercase italic text-yellow-500">BEAT GATE ADMIN</h1>
+                        <h1 className="text-4xl font-black uppercase italic text-[#fc1c1c]">BEAT GATE ADMIN</h1>
                         <p className="text-gray-500 text-sm">One-click deployment to GitHub Pages</p>
                     </header>
 
@@ -691,7 +692,7 @@
                                 </div>
 
                                 <div className="flex gap-3 pt-4">
-                                    <button onClick={pushToGitHub} disabled={loading} className="flex-1 py-5 bg-yellow-500 hover:bg-yellow-400 text-black font-black rounded-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow-yellow-900/20">
+                                    <button onClick={pushToGitHub} disabled={loading} className="flex-1 py-5 bg-[#fc1c1c] hover:bg-red-500 text-black font-black rounded-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow-red-900/20">
                                         {loading ? <div className="w-5 h-5 border-2 loader rounded-full"></div> : '🚀 PUSH TO GITHUB'}
                                     </button>
                                     <button onClick={copyCode} className="px-6 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl border border-white/10 transition-all">
@@ -702,14 +703,14 @@
                         </div>
 
                         <div className="space-y-6">
-                            <div className="glass rounded-3xl p-6 border-yellow-500/20 space-y-4">
-                                <h2 className="text-xs font-bold uppercase text-yellow-500 flex items-center gap-2">⚙️ GitHub Config</h2>
+                            <div className="glass rounded-3xl p-6 border-red-500/20 space-y-4">
+                                <h2 className="text-xs font-bold uppercase text-[#fc1c1c] flex items-center gap-2">⚙️ GitHub Config</h2>
                                 <div className="space-y-3">
                                     <input name="username" value={ghConfig.username} onChange={saveGhConfig} placeholder="GitHub Username" className="input-field py-2" />
                                     <input name="repo" value={ghConfig.repo} onChange={saveGhConfig} placeholder="Repo Name (e.g. beats-site)" className="input-field py-2" />
                                     <div className="relative">
                                         <input name="token" type="password" value={ghConfig.token} onChange={saveGhConfig} placeholder="Personal Access Token" className="input-field py-2 pr-20" />
-                                        <button onClick={fillToken} className="absolute right-2 top-1.5 px-2 py-1 bg-yellow-600/20 text-yellow-500 text-[9px] font-bold rounded-md hover:bg-yellow-600/40 transition-all">RESTORE</button>
+                                        <button onClick={fillToken} className="absolute right-2 top-1.5 px-2 py-1 bg-red-600/20 text-[#fc1c1c] text-[9px] font-bold rounded-md hover:bg-red-600/40 transition-all">RESTORE</button>
                                     </div>
                                 </div>
                                 <p className="text-[9px] text-gray-500 leading-tight">
@@ -721,10 +722,10 @@
                                 <h2 className="text-xs font-bold uppercase text-gray-400 flex items-center gap-2">🕒 Recent Beats</h2>
                                 <div className="space-y-3 overflow-y-auto max-h-[300px] pr-1">
                                     {history.map((item, i) => (
-                                        <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] space-y-1 hover:border-yellow-500/30 transition-all cursor-pointer" onClick={() => setForm(item)}>
+                                        <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] space-y-1 hover:border-[#fc1c1c]/30 transition-all cursor-pointer" onClick={() => setForm(item)}>
                                             <div className="font-bold uppercase flex justify-between">
                                                 <span>{item.title}</span>
-                                                <span className="text-yellow-500/50">LOAD</span>
+                                                <span className="text-[#fc1c1c]/50">LOAD</span>
                                             </div>
                                             {/* CLEAN URL CHANGE: Display as directory path (Root level) */}
                                             <div className="opacity-50 font-mono truncate">{item.slug}/</div>
