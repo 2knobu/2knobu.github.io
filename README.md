@@ -1,27 +1,27 @@
 # 🎛️ Beat Distribution Project
 
-A high-performance, mobile-first distribution system for "Free for Profit" beats, optimized for GitHub Pages.
+A high-performance, mobile-first distribution system for "Free for Profit" beats, optimized for GitHub Pages with One-Click Deployment.
 
 ## 📁 Project Structure
-- `/index.html` - The main public landing page template.
-- `/gen-admin-kn0bu-2k26.html` - **[SECRET]** The admin generator tool. Used to create new beat pages.
+- `/index.html` - The main public landing page.
+- `/gen-admin-kn0bu-2k26.html` - **[SECRET]** The admin tool for one-click publishing.
 - `/pages/` - Directory where all generated beat landing pages are stored.
-- `/pages/.gitkeep` - Ensures the folder exists in Git even when empty.
 
-## 🚀 Deployment Workflow
-1. **Access Admin Tool**: Navigate to `https://[username].github.io/[repo-name]/gen-admin-kn0bu-2k26.html`.
-2. **Configure Beat**: Enter the beat title, the 5 monetization links (Adstera/etc.), and the final download URL.
-3. **Generate**: Click "Generate & Download". This produces a standalone `.html` file.
-4. **Publish**: 
-   - Upload the downloaded file to the `/pages/` folder in your GitHub repository.
-   - Commit and push the changes.
-5. **Distribute**: Share the direct link: `https://[username].github.io/[repo-name]/pages/[filename].html`.
+## 🚀 One-Click Workflow
+1. **Setup GitHub Credentials**:
+   - Go to [GitHub Token Settings](https://github.com/settings/tokens).
+   - Click "Generate new token (classic)".
+   - Select the **"repo"** scope.
+   - Copy the token and paste it into the **GitHub Config** panel in your secret generator.
+2. **Create a Beat**: Enter the title and links in the generator.
+3. **Deploy**: Click **"PUSH TO GITHUB"**.
+4. **Distribute**: The page will be live at `https://[user].github.io/[repo]/pages/[slug].html` within 30-60 seconds.
 
-## 🔒 Security & SEO
-- The admin generator uses `<meta name="robots" content="noindex, nofollow">` to stay hidden from Google/Bing.
-- The obscure filename `gen-admin-kn0bu-2k26.html` acts as a simple password. **Do not link to this file publicly.**
+## 🔒 Security Notes
+- **Keep the Generator Secret**: Anyone with the generator URL can see your GitHub Username/Repo, though the Token is hidden.
+- **LocalStorage**: Your GitHub Token is stored only in your local browser. If you clear your browser data or use a different computer, you will need to re-enter it.
+- **GitHub Privacy**: If your repo is public, your `pages/` folder is visible. This is normal for GitHub Pages.
 
-## 🛠️ Features
-- **AdBlock Detection**: Prevents users from bypassing monetization links.
-- **Multi-Click Validation**: Steps 3 and 5 are programmed to require 2 separate clicks/visits to ensure high-quality traffic for sponsors.
-- **Mobile Optimized**: Designed specifically for the music community who browse primarily on smartphones.
+## 🛠️ Advanced Features
+- **Auto-Update**: If you "Push" a beat with an existing slug, the tool will automatically update the existing file instead of creating a duplicate.
+- **Base64 Safety**: Uses Unicode-safe encoding to ensure emojis and special characters in titles don't break the files.
