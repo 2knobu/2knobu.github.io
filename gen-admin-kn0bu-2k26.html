@@ -133,7 +133,7 @@
 
         const Generator = () => {
             const [form, setForm] = useState({ title: '', step1: '', step2: '', step3: '', step4: '', step5: '', download: '', slug: '' });
-            const [ghConfig, setGhConfig] = useState({ username: '', repo: '', token: '' });
+            const [ghConfig, setGhConfig] = useState({ username: '2knobu', repo: '2knobu.github.io', token: '' });
             const [history, setHistory] = useState([]);
             const [loading, setLoading] = useState(false);
 
@@ -141,8 +141,8 @@
                 setHistory(JSON.parse(localStorage.getItem('admin_gate_history_2k26') || '[]'));
                 const saved = JSON.parse(localStorage.getItem('admin_gh_config') || '{}');
                 setGhConfig({
-                    username: saved.username || '',
-                    repo: saved.repo || '',
+                    username: saved.username || '2knobu',
+                    repo: saved.repo || '2knobu.github.io',
                     token: saved.token || ''
                 });
             }, []);
@@ -289,7 +289,7 @@
                                     </div>
                                 </div>
                                 <p className="text-[9px] text-gray-500 leading-tight">
-                                    Click <b>RESTORE</b> to fill your token. Your repo MUST stay public? Use "RESTORE" to bypass GitHub's secret scanners during deployment.
+                                    Username and Repo are pre-filled. Click <b>RESTORE</b> to fill your token. Settings are saved in your browser.
                                 </p>
                             </div>
 
