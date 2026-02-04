@@ -43,7 +43,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect, useMemo, useRef } = React;
 
         // --- UTILS: BASE64 SAFE ENCODING ---
         // GitHub API breaks with standard btoa if strings have emojis. This fixes it.
@@ -118,7 +118,28 @@
 
         // --- COMPONENTS ---
 
-        // FIX 1: Generic Password UI (No hints)
+        // SAFE ICON WRAPPER
+        // Prevents React crash when Lucide modifies the DOM
+        const Icon = ({ name, className }) => {
+            const ref = useRef(null);
+            
+            useEffect(() => {
+                if (ref.current) {
+                    // Reset content
+                    ref.current.innerHTML = `<i data-lucide="${name}" class="${className || ''}"></i>`;
+                    // Render icon in this isolated node
+                    lucide.createIcons({
+                        root: ref.current,
+                        nameAttr: 'data-lucide',
+                        attrs: { class: className }
+                    });
+                }
+            }, [name, className]);
+
+            return <span ref={ref} className="inline-flex items-center justify-center" />;
+        };
+
+        // 1. Generic Password UI
         const PasswordGate = ({ onSuccess }) => {
             const [input, setInput] = useState('');
             const [error, setError] = useState(false);
@@ -140,7 +161,7 @@
                     <div className={`glass p-8 rounded-2xl max-w-sm w-full text-center space-y-6 transition-transform duration-200 ${error ? 'translate-x-[-10px] border-red-500/50' : ''}`}>
                         <div className="flex justify-center mb-2">
                             <div className="p-4 bg-white/5 rounded-full border border-white/10">
-                                <i data-lucide="shield-check" className="w-10 h-10 text-white"></i>
+                                <Icon name="shield-check" className="w-10 h-10 text-white" />
                             </div>
                         </div>
                         <div>
@@ -165,36 +186,57 @@
             );
         };
 
+        // 2. Success Modal
         const SuccessModal = ({ isOpen, onClose, data }) => {
+            const [copied, setCopied] = useState(false);
+
             if (!isOpen) return null;
 
             const copyToClipboard = () => {
-                navigator.clipboard.writeText(data.url);
-                alert("URL Copied!");
+                navigator.clipboard.writeText(data.url)
+                    .then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                    })
+                    .catch(() => alert("Could not copy automatically. Please select and copy manually."));
             };
 
             return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-slide">
-                    <div className="glass-heavy border border-green-500/30 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_50px_rgba(34,197,94,0.15)]">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-slide">
+                    <div className="glass-heavy border border-green-500/40 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_50px_rgba(34,197,94,0.15)] relative">
+                        
                         <div className="flex justify-center">
-                            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500">
-                                <i data-lucide="check" className="w-8 h-8 text-green-500"></i>
+                            <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                                <Icon name="check" className="w-10 h-10 text-green-500" />
                             </div>
                         </div>
+                        
                         <div>
-                            <h2 className="text-3xl font-black uppercase text-white">Live!</h2>
-                            <p className="text-green-400 font-medium">Beat page deployed successfully</p>
+                            <h2 className="text-3xl font-black uppercase text-white tracking-tight">Deploy Success</h2>
+                            <p className="text-green-400 font-medium mt-1">Your beat page is now live!</p>
                         </div>
                         
-                        <div className="bg-black/50 p-4 rounded-xl border border-white/10 break-all">
-                            <a href={data.url} target="_blank" className="text-blue-400 text-sm hover:underline">{data.url}</a>
+                        <div className="bg-black/60 p-4 rounded-xl border border-white/10 break-all group relative">
+                            <a href={data.url} target="_blank" className="text-blue-400 text-sm hover:underline hover:text-blue-300 transition-colors break-words">
+                                {data.url}
+                            </a>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <button onClick={copyToClipboard} className="py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 flex items-center justify-center gap-2">
-                                <i data-lucide="copy" className="w-4 h-4"></i> Copy Link
+                        <div className="grid grid-cols-2 gap-3 pt-2">
+                            <button 
+                                onClick={copyToClipboard} 
+                                className={`
+                                    py-3.5 px-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2
+                                    ${copied ? 'bg-green-600 text-white' : 'bg-white text-black hover:bg-gray-200'}
+                                `}
+                            >
+                                {copied ? <Icon name="check" className="w-4 h-4" /> : <Icon name="copy" className="w-4 h-4" />}
+                                {copied ? 'Copied!' : 'Copy Link'}
                             </button>
-                            <button onClick={onClose} className="py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20">
+                            <button 
+                                onClick={onClose} 
+                                className="py-3.5 px-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-colors border border-white/5"
+                            >
                                 Close
                             </button>
                         </div>
@@ -207,7 +249,7 @@
             const [isLocked, setIsLocked] = useState(true);
             const [form, setForm] = useState({ title: '', step1: '', step2: '', step3: '', step4: '', step5: '', download: '', slug: '' });
             const [ghConfig, setGhConfig] = useState({ username: '2knobu', repo: '2knobu.github.io', token: '' });
-            const [history, setHistory] = useState([]); // Cloud history
+            const [history, setHistory] = useState([]); 
             const [loading, setLoading] = useState(false);
             const [successData, setSuccessData] = useState(null);
             
@@ -218,7 +260,6 @@
             // --- INIT ---
             useEffect(() => {
                 loadConfigFromStorage();
-                lucide.createIcons();
             }, []);
 
             useEffect(() => {
@@ -227,11 +268,7 @@
                 }
             }, [isLocked, ghConfig.token]);
 
-            useEffect(() => {
-                lucide.createIcons();
-            }, [history, isLocked]);
-
-            // FIX 4: Restore Saved Token Button Logic
+            // 4. Restore Saved Token Logic
             const loadConfigFromStorage = () => {
                 try {
                     const savedConfig = JSON.parse(localStorage.getItem('admin_gh_config') || '{}');
@@ -261,9 +298,8 @@
                         headers: { 'Authorization': `token ${ghConfig.token}`, 'Cache-Control': 'no-cache' } 
                     });
                     
-                    // FIX 3: Handle 404 (File not found) gracefully
+                    // 3. Fix: Handle 404 (File not found) gracefully
                     if (res.status === 404) {
-                        console.log("History file not found, starting empty.");
                         setHistory([]);
                         return;
                     }
@@ -279,12 +315,10 @@
                     }
                 } catch (e) {
                     console.error("Failed to fetch history:", e);
-                    // Do not crash the app, just show empty history
                     setHistory([]);
                 }
             };
 
-            // FIX 2: Wrapped in robust try/catch and handled SHA logic
             const updateCloudHistory = async (newEntry) => {
                 const historyPath = 'sites_history.json';
                 const url = `https://api.github.com/repos/${ghConfig.username}/${ghConfig.repo}/contents/${historyPath}`;
@@ -302,11 +336,8 @@
                         const content = safeAtob(data.content);
                         if (content) currentHistory = JSON.parse(content);
                     } else if (getRes.status === 404) {
-                        // File doesn't exist, proceed with empty history and no SHA
                         sha = null;
                         currentHistory = [];
-                    } else {
-                        console.error("History fetch error", getRes.statusText);
                     }
 
                     // 2. Append new entry
@@ -319,18 +350,16 @@
                         body: JSON.stringify({
                             message: `Update history: ${newEntry.title}`,
                             content: safeBtoa(JSON.stringify(updatedHistory, null, 2)),
-                            sha: sha // undefined/null if creating new
+                            sha: sha
                         })
                     });
 
                     if (putRes.ok) {
                         setHistory(updatedHistory);
-                    } else {
-                        console.error("Failed to update history JSON");
                     }
                 } catch (e) {
                     console.error("Cloud History Update Error:", e);
-                    // Don't throw, we want the modal to still show even if history fails
+                    // Don't propagate error, user still successfully deployed page
                 }
             };
 
@@ -347,7 +376,7 @@
                     const filename = `${slug}/index.html`;
                     const content = getLandingPageTemplate(form);
 
-                    // 1. Check if file exists (to get SHA for update)
+                    // 1. Check if file exists
                     const getUrl = `https://api.github.com/repos/${ghConfig.username}/${ghConfig.repo}/contents/${filename}`;
                     let sha = null;
                     
@@ -357,7 +386,7 @@
                             const fileData = await checkRes.json();
                             sha = fileData.sha;
                         }
-                    } catch(e) { console.log("New file, no SHA needed"); }
+                    } catch(e) { console.log("New file check", e); }
 
                     // 2. Upload HTML File
                     const res = await fetch(getUrl, {
@@ -374,7 +403,6 @@
                     if (res.ok) {
                         const liveUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/${slug}/`;
                         
-                        // 3. Update JSON History
                         const historyEntry = {
                             title: form.title,
                             slug: slug,
@@ -383,10 +411,10 @@
                             formData: form
                         };
                         
-                        // FIX 2: Ensure this doesn't crash the UI flow
                         await updateCloudHistory(historyEntry);
-
-                        setSuccessData({ url: liveUrl });
+                        
+                        // FIX: Explicitly set data to trigger modal
+                        setSuccessData({ url: liveUrl }); 
                     } else {
                         const err = await res.json();
                         alert(`GitHub Error: ${err.message}`);
@@ -407,12 +435,9 @@
                 }
             };
 
-            // --- FILTERING LOGIC ---
             const filteredHistory = useMemo(() => {
-                if (!Array.isArray(history)) return []; // Safety check
-                
+                if (!Array.isArray(history)) return [];
                 let res = [...history];
-                
                 if (searchTerm) {
                     const lower = searchTerm.toLowerCase();
                     res = res.filter(h => 
@@ -420,7 +445,6 @@
                         (h.slug && h.slug.toLowerCase().includes(lower))
                     );
                 }
-
                 res.sort((a, b) => {
                     if (sortMode === 'date-desc') return new Date(b.date) - new Date(a.date);
                     if (sortMode === 'date-asc') return new Date(a.date) - new Date(b.date);
@@ -428,15 +452,14 @@
                     if (sortMode === 'alpha-desc') return (b.title || "").localeCompare(a.title || "");
                     return 0;
                 });
-
                 return res;
             }, [history, searchTerm, sortMode]);
-
 
             if (isLocked) return <PasswordGate onSuccess={() => setIsLocked(false)} />;
 
             return (
-                <div className="max-w-7xl mx-auto space-y-8 pb-20">
+                <div className="max-w-7xl mx-auto space-y-8 pb-20 relative">
+                    {/* MODAL IS PLACED HERE AT ROOT LEVEL */}
                     <SuccessModal isOpen={!!successData} onClose={() => setSuccessData(null)} data={successData || {}} />
 
                     <header className="flex flex-col md:flex-row justify-between items-center gap-4 animate-slide">
@@ -453,19 +476,17 @@
                                 placeholder="GitHub Token" 
                                 className="input-field flex-1 md:w-64 border-primary/30 focus:border-primary"
                             />
-                            {/* FIX 4: Restore Saved Button */}
                             <button 
                                 onClick={loadConfigFromStorage}
                                 title="Load saved token"
                                 className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors border border-white/10"
                             >
-                                <i data-lucide="refresh-cw" className="w-4 h-4"></i>
+                                <Icon name="refresh-cw" className="w-4 h-4" />
                             </button>
                         </div>
                     </header>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        
                         {/* LEFT: GENERATOR FORM */}
                         <div className="lg:col-span-8 space-y-6">
                             <div className="glass rounded-[2rem] p-8 space-y-6">
@@ -474,7 +495,6 @@
                                         <label className="text-[10px] font-bold text-gray-500 uppercase px-2">Beat Title</label>
                                         <input name="title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="2026 DARK TRAP" className="input-field text-lg font-bold" />
                                     </div>
-                                    
                                     {[1,2,3,4,5].map(n => (
                                         <div key={n} className="space-y-1 relative">
                                             <label className="text-[10px] font-bold text-gray-500 uppercase px-2 flex justify-between">
@@ -482,25 +502,24 @@
                                                 {(n===3||n===5) && <span className="text-primary text-[9px] border border-primary/50 px-1 rounded">2 CLICKS</span>}
                                             </label>
                                             <div className="relative">
-                                                <i data-lucide="link" className="absolute left-3 top-2.5 w-4 h-4 text-gray-600"></i>
+                                                <div className="absolute left-3 top-2.5 w-4 h-4 text-gray-600">
+                                                    <Icon name="link" className="w-4 h-4" />
+                                                </div>
                                                 <input value={form['step'+n]} onChange={e => setForm({...form, ['step'+n]: e.target.value})} placeholder="https://..." className="input-field pl-10" />
                                             </div>
                                         </div>
                                     ))}
-                                    
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-gray-500 uppercase px-2">Custom Slug (Optional)</label>
                                         <input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} placeholder="auto-generated" className="input-field" />
                                     </div>
-                                    
                                     <div className="md:col-span-2 space-y-1">
                                         <label className="text-[10px] font-bold text-gray-500 uppercase px-2 text-green-400">Final Download URL</label>
                                         <input value={form.download} onChange={e => setForm({...form, download: e.target.value})} placeholder="https://mediafire.com/..." className="input-field border-green-500/20 focus:border-green-500/50" />
                                     </div>
                                 </div>
-
                                 <button onClick={pushToGitHub} disabled={loading} className="w-full py-5 btn-primary font-black text-lg rounded-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg shadow-blue-900/20 hover:scale-[1.01] active:scale-[0.99]">
-                                    {loading ? <div className="w-6 h-6 border-4 loader rounded-full"></div> : <><i data-lucide="rocket"></i> PUSH TO CLOUD</>}
+                                    {loading ? <div className="w-6 h-6 border-4 loader rounded-full"></div> : <><Icon name="rocket" className="w-5 h-5" /> PUSH TO CLOUD</>}
                                 </button>
                             </div>
                         </div>
@@ -510,15 +529,15 @@
                             <div className="glass rounded-3xl p-6 flex-1 flex flex-col min-h-[500px]">
                                 <div className="flex justify-between items-center mb-4">
                                     <h2 className="text-xs font-bold uppercase text-primary flex items-center gap-2">
-                                        <i data-lucide="cloud" className="w-4 h-4"></i> Cloud History
+                                        <Icon name="cloud" className="w-4 h-4" /> Cloud History
                                     </h2>
                                     <span className="text-[10px] text-gray-500">{history.length} Sites</span>
                                 </div>
-
-                                {/* Filters */}
                                 <div className="space-y-2 mb-4">
                                     <div className="relative">
-                                        <i data-lucide="search" className="absolute left-3 top-2.5 w-4 h-4 text-gray-500"></i>
+                                        <div className="absolute left-3 top-2.5 w-4 h-4 text-gray-500">
+                                            <Icon name="search" className="w-4 h-4" />
+                                        </div>
                                         <input 
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -536,12 +555,10 @@
                                         <option value="alpha-asc">A-Z</option>
                                     </select>
                                 </div>
-
-                                {/* List */}
                                 <div className="flex-1 overflow-y-auto history-scroll space-y-2 pr-2 max-h-[600px]">
                                     {filteredHistory.length === 0 ? (
                                         <div className="text-center py-10 text-gray-600">
-                                            <i data-lucide="ghost" className="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                                            <div className="flex justify-center mb-2"><Icon name="ghost" className="w-8 h-8 opacity-50" /></div>
                                             <p className="text-xs">No beats found.</p>
                                         </div>
                                     ) : (
@@ -554,7 +571,7 @@
                                                         className="text-gray-500 hover:text-white"
                                                         title="Copy Link"
                                                     >
-                                                        <i data-lucide="copy" className="w-3 h-3"></i>
+                                                        <Icon name="copy" className="w-3 h-3" />
                                                     </button>
                                                 </div>
                                                 <div className="flex justify-between items-center mt-2">
