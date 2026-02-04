@@ -605,8 +605,8 @@
                 setLoading(true);
                 const slug = generateSlug();
                 
-                // --- CLEAN URL CHANGE: Save to folder/index.html instead of file.html ---
-                const filename = `pages/${slug}/index.html`;
+                // --- CLEAN URL CHANGE: Save to folder/index.html instead of pages/folder/index.html ---
+                const filename = `${slug}/index.html`;
                 
                 const content = getLandingPageTemplate(form);
                 
@@ -631,8 +631,8 @@
                     });
 
                     if (res.ok) {
-                        // --- CLEAN URL CHANGE: Clean URL in alert ---
-                        const liveUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/pages/${slug}`;
+                        // --- CLEAN URL CHANGE: Clean URL in alert (Root level) ---
+                        const liveUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/${slug}/`;
                         alert(`✅ SUCCESS! Beat page is live.\n\nURL: ${liveUrl}`);
                         addToHistory(slug);
                     } else {
@@ -726,8 +726,8 @@
                                                 <span>{item.title}</span>
                                                 <span className="text-yellow-500/50">LOAD</span>
                                             </div>
-                                            {/* CLEAN URL CHANGE: Display as directory path */}
-                                            <div className="opacity-50 font-mono truncate">pages/{item.slug}</div>
+                                            {/* CLEAN URL CHANGE: Display as directory path (Root level) */}
+                                            <div className="opacity-50 font-mono truncate">{item.slug}/</div>
                                         </div>
                                     ))}
                                     {history.length === 0 && <p className="text-[10px] text-gray-600 italic text-center py-4">No recent history</p>}
